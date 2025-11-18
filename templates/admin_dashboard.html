@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - MoravskéWeby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1d2e 0%, #16213e 100%);
+            color: #e8eaf6;
+            min-height: 100vh;
+        }
+        
+        /* Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        
+        .user-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 50px;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .logout-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            filter: blur(60px);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert-success {
+            background: rgba(76, 175, 80, 0.1);
+            border-color: #4caf50;
+            color: #81c784;
+        }
+        
+        .alert-error {
+            background: rgba(244, 67, 54, 0.1);
+            border-color: #f44336;
+            color: #e57373;
+        }
+        
+        .alert-info {
+            background: rgba(33, 150, 243, 0.1);
+            border-color: #2196f3;
+            color: #64b5f6;
+        }
+        
+        /* Glass Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .glass-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #b0b3c7;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #e8eaf6;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(176, 179, 199, 0.5);
+        }
+        
+        /* Button */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Campaigns Grid */
+        .campaigns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .campaign-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .campaign-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .campaign-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .campaign-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .campaign-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .campaign-card p {
+            color: #b0b3c7;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stat-label {
+            font-size: 0.85rem;
+            color: #b0b3c7;
+            margin-top: 0.3rem;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #b0b3c7;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">📊 SCORPIX Admin</div>
+        <div class="user-info">
+            <span>👤 {{ user.username }}</span>
+            <a href="/logout" class="logout-btn">Odhlásit se</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="header">
+            <h1>📞 Cold Calling Dashboard</h1>
+            <p>Správa kampaní - přihlášen jako {{ user.username }}</p>
+        </div>
+        
+        <div class="glass-card">
+            <h2>➕ Nová kampaň</h2>
+            <form action="/admin/create-campaign" method="POST">
+                <div class="form-group">
+                    <label>Název kampaně:</label>
+                    <input type="text" name="name" placeholder="Např. Weby Q4 2025" required>
+                </div>
+                <div class="form-group">
+                    <label>Popis:</label>
+                    <textarea name="description" rows="3" placeholder="Cíl kampaně, poznámky..."></textarea>
+                </div>
+                <button type="submit" class="btn">Vytvořit kampaň</button>
+            </form>
+        </div>
+        
+        <h2 style="color: #e8eaf6; margin-bottom: 1rem;">🎯 Moje kampaně</h2>
+        
+        {% if campaigns %}
+        <div class="campaigns-grid">
+            {% for campaign in campaigns %}
+            <div class="campaign-card" onclick="window.location.href='/admin/campaign/{{ campaign.id }}'">
+                <h3>{{ campaign.name }}</h3>
+                <p>{{ campaign.description or 'Bez popisu' }}</p>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">{{ campaign.total_contacts or 0 }}</div>
+                        <div class="stat-label">Kontaktů</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">{{ campaign.success_rate or 0 }}%</div>
+                        <div class="stat-label">Úspěšnost</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-card empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>Zatím žádné kampaně. Vytvoř první výše!</p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
