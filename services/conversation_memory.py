@@ -33,6 +33,18 @@ class ConversationMemory:
         self.patterns = self._load_patterns()
         self.user_profiles = self._load_profiles()
         self.insights = self._load_insights()
+        
+        # Ensure insights has the correct structure
+        if not self.insights.get('successful_openings'):
+            self.insights['successful_openings'] = []
+        if not self.insights.get('successful_closings'):
+            self.insights['successful_closings'] = []
+        if not self.insights.get('best_objection_handlers'):
+            self.insights['best_objection_handlers'] = {}
+        if not self.insights.get('timing_insights'):
+            self.insights['timing_insights'] = {}
+        if not self.insights.get('conversation_flow_patterns'):
+            self.insights['conversation_flow_patterns'] = []
     
     def _init_files(self):
         """Inicializuje soubory"""

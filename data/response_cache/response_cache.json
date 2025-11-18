@@ -1,0 +1,14 @@
+{
+  "f0587cbab3492110591f7f69c6acbec9": {
+    "query": "Kolik stojí web?",
+    "response": "Od 8000 Kč",
+    "context": {
+      "intent": "price"
+    },
+    "cached_at": "2025-11-18T22:05:41.652594",
+    "expires_at": "2025-11-18T23:05:41.652588",
+    "avg_generation_time": 0.5,
+    "hit_count": 1,
+    "last_hit": "2025-11-18T22:05:41.652847"
+  }
+}
