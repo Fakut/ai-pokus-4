@@ -83,6 +83,26 @@ except Exception as e:
     print(f"❌ Chyba při inicializaci: {e}")
     raise
 
+# Registrace meetings blueprint
+try:
+    from web.meetings_admin import meetings_bp
+    app.register_blueprint(meetings_bp)
+    print("✅ Meetings blueprint zaregistrován")
+except Exception as e:
+    print(f"⚠️  Meetings blueprint error: {e}")
+
+# Jinja2 filter pro formátování datetime
+@app.template_filter('formatDatetime')
+def format_datetime_filter(datetime_str):
+    """Formátuje ISO datetime do českého formátu"""
+    try:
+        dt = datetime.fromisoformat(datetime_str.replace('Z', '+00:00'))
+        weekdays = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne']
+        weekday = weekdays[dt.weekday()]
+        return f"{weekday} {dt.day}.{dt.month}. {dt.hour}:{dt.minute:02d}"
+    except:
+        return datetime_str
+
 
 # ============================================================
 # MIDDLEWARE - PŘIHLÁŠENÍ

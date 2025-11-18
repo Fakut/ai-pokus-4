@@ -11,7 +11,7 @@ Knowledge Base pro AI calling systém
 
 KNOWLEDGE_BASE = {
     "firma": {
-        "nazev": "MoravskeWeby (Lososs Web Development)",
+        "nazev": "Moravské Weby (Lososs Web Development)",
         "kontakt": {
             "majitel": "Ondřej Hyža",
             "telefon": "+420 735 744 433",
@@ -530,5 +530,79 @@ PRAVIDLA:
 - Buď přátelský ale profesionální
 
 Mluv přirozeně česky, KRÁTCE a KONKRÉTNĚ!"""
+
+# ============================================================
+# MEETING SCHEDULING KNOWLEDGE
+# ============================================================
+
+MEETING_SCHEDULING_KB = {
+    "keywords": {
+        "meeting_request": [
+            "schůzka", "schůzku", "sejít", "setkání", "potkat",
+            "můžeme se sejít", "můžem se vidět", "sejdemes se",
+            "setkat", "osobně", "prezentace", "schůzce", "konzultace"
+        ],
+        "time_relative": {
+            "dnes": 0,
+            "dneska": 0,
+            "zítra": 1,
+            "zítřek": 1,
+            "pozítří": 2,
+            "pozítřek": 2
+        },
+        "time_periods": {
+            "ráno": "09:00",
+            "dopoledne": "10:00",
+            "poledne": "12:00",
+            "odpoledne": "14:00",
+            "večer": "18:00"
+        },
+        "location_types": {
+            "u_vas": ["u vás", "u vas", "ve vaší kanceláři", "ve vašem"],
+            "u_nas": ["u nás", "u nas", "v naší kanceláři", "k nám"],
+            "online": ["online", "přes zoom", "přes teams", "videohovor", "video"]
+        }
+    },
+    
+    "responses": {
+        "meeting_available": "Výborně! {datetime} mám volno. Kde byste preferoval schůzku - u vás, u nás nebo online?",
+        "meeting_conflict": "Bohužel {datetime} už mám schůzku. Šlo by {alternative1} nebo {alternative2}?",
+        "meeting_blocked": "Bohužel {datetime} nemám čas. Šlo by {alternative1} nebo {alternative2}?",
+        "meeting_confirmed": "Skvělé! Mám to zaznamenané - {datetime}, {location}. Zavolá vám {person} na potvrzení.",
+        "meeting_parse_failed": "Kdy byste měl čas? Mohu nabídnout termín zítra odpoledne ve 14:00.",
+        "meeting_location_question": "Kde byste preferoval schůzku - u vás, u nás nebo online?",
+        "meeting_follow_up": "Zavolá vám {person} den předem na potvrzení. Je to OK?"
+    },
+    
+    "rules": {
+        "min_spacing_hours": 24,  # Minimální rozestup mezi schůzkami
+        "default_duration_minutes": 60,  # Výchozí délka schůzky
+        "business_hours": {
+            "start": 8,
+            "end": 18
+        },
+        "default_followup": "Ondřej"  # Kdo bude následovat
+    },
+    
+    "examples": {
+        "request_tomorrow": {
+            "input": "Můžeme se sejít zítra odpoledne?",
+            "response": "Zítra odpoledne mám volno ve 14:00 nebo v 16:00. Co vám vyhovuje?"
+        },
+        "request_specific": {
+            "input": "Šlo by ve středu ve 3?",
+            "response": "Středa 15:00 je obsazená. Šlo by čtvrtek 15:00 nebo pátek 14:00?"
+        },
+        "location_question": {
+            "input": "Můžeme se potkat?",
+            "response": "Ano, klidně! Kdy byste měl čas? A kde - u vás, u nás nebo online?"
+        }
+    }
+}
+
+
+# ============================================================
+# CONTEXT RETRIEVAL FUNCTION (ENHANCED WITH MEETINGS)
+# ============================================================
     
     return prompt
