@@ -265,8 +265,18 @@ def parse_time():
 @meetings_bp.route('/calendar')
 def calendar_view():
     """Kalendářní pohled"""
-    # Získej schůzky na aktuální měsíc
-    now = datetime.now()
+    # Získej měsíc z parametru nebo použij aktuální
+    month_param = request.args.get('month')
+    
+    if month_param:
+        try:
+            now = datetime.strptime(month_param + '-01', '%Y-%m-%d')
+        except ValueError:
+            now = datetime.now()
+    else:
+        now = datetime.now()
+    
+    # Získej schůzky na zvolený měsíc
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0)
     
     # Konec měsíce
@@ -280,6 +290,7 @@ def calendar_view():
         to_date=end_of_month.isoformat()
     )
     
+    # Získej všechny blokované časy (můžeme filtrovat na frontendu)
     blocks = db.get_availability_blocks()
     
     return render_template('calendar.html',
