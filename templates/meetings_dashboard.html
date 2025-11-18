@@ -1,0 +1,628 @@
+<!-- templates/meetings_dashboard.html -->
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Správa schůzek - Moravské Weby</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            opacity: 0.9;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .btn-secondary:hover {
+            background: #f0f2ff;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .section h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+        
+        .meetings-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .meeting-card {
+            border: 1px solid #e0e0e0;
+            padding: 1.5rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+            align-items: start;
+        }
+        
+        .meeting-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .meeting-info h3 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        
+        .meeting-info .datetime {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .meeting-info .details {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .meeting-info .details span {
+            display: inline-block;
+            margin-right: 1rem;
+        }
+        
+        .meeting-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .blocks-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+        
+        .block-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            padding: 1rem;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+            align-items: center;
+        }
+        
+        .block-info {
+            font-size: 0.9rem;
+        }
+        
+        .block-info strong {
+            color: #333;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-scheduled {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📅 Správa schůzek</h1>
+        <p>Domlouvání a řízení schůzek s AI podporou</p>
+    </div>
+    
+    <div class="container">
+        <!-- Statistiky -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Celkem schůzek</h3>
+                <div class="value">{{ stats.total }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Nadcházející</h3>
+                <div class="value">{{ stats.upcoming }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Naplánované</h3>
+                <div class="value">{{ stats.by_status.get('scheduled', 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Dokončené</h3>
+                <div class="value">{{ stats.by_status.get('completed', 0) }}</div>
+            </div>
+        </div>
+        
+        <!-- Akce -->
+        <div class="actions">
+            <button class="btn btn-primary" onclick="openAddMeetingModal()">
+                ➕ Nová schůzka
+            </button>
+            <button class="btn btn-secondary" onclick="openAddBlockModal()">
+                🚫 Blokovat čas
+            </button>
+            <a href="/admin/meetings/calendar" class="btn btn-secondary">
+                📆 Kalendář
+            </a>
+        </div>
+        
+        <!-- Nadcházející schůzky -->
+        <div class="section">
+            <h2>Nadcházející schůzky (7 dní)</h2>
+            {% if upcoming %}
+                <div class="meetings-list">
+                    {% for meeting in upcoming %}
+                    <div class="meeting-card">
+                        <div class="meeting-info">
+                            <h3>{{ meeting.contact_name }}</h3>
+                            <div class="datetime">📅 {{ meeting.meeting_datetime | formatDatetime }}</div>
+                            <div class="details">
+                                <span>📞 {{ meeting.contact_phone }}</span>
+                                {% if meeting.location_type %}
+                                <span>📍 {{ meeting.location_type }}</span>
+                                {% endif %}
+                                {% if meeting.followup_person %}
+                                <span>👤 {{ meeting.followup_person }}</span>
+                                {% endif %}
+                            </div>
+                            {% if meeting.notes %}
+                            <div class="details" style="margin-top: 0.5rem;">
+                                <em>{{ meeting.notes }}</em>
+                            </div>
+                            {% endif %}
+                            <span class="status-badge status-{{ meeting.status }}">{{ meeting.status }}</span>
+                        </div>
+                        <div class="meeting-actions">
+                            <button class="btn btn-secondary btn-small" onclick="editMeeting({{ meeting.id }})">
+                                ✏️
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deleteMeeting({{ meeting.id }})">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>Žádné nadcházející schůzky</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Blokované časy -->
+        <div class="section">
+            <h2>Blokované časy</h2>
+            {% if blocks %}
+                <div class="blocks-list">
+                    {% for block in blocks %}
+                    <div class="block-item">
+                        <div class="block-info">
+                            <strong>{{ block.date }}</strong> 
+                            {{ block.time_from }} - {{ block.time_to }}
+                            {% if block.reason %}
+                            <span style="color: #666;"> - {{ block.reason }}</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-danger btn-small" onclick="deleteBlock({{ block.id }})">
+                            🗑️
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>Žádné blokované časy</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Modal pro novou schůzku -->
+    <div id="addMeetingModal" class="modal">
+        <div class="modal-content">
+            <h2>Nová schůzka</h2>
+            <form id="addMeetingForm" onsubmit="handleAddMeeting(event)">
+                <div class="form-group">
+                    <label>Jméno kontaktu *</label>
+                    <input type="text" name="contact_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefon *</label>
+                    <input type="tel" name="contact_phone" required>
+                </div>
+                <div class="form-group">
+                    <label>Datum a čas *</label>
+                    <input type="datetime-local" name="meeting_datetime" required>
+                </div>
+                <div class="form-group">
+                    <label>Typ místa</label>
+                    <select name="location_type">
+                        <option value="">Vyberte...</option>
+                        <option value="u_nas">U nás</option>
+                        <option value="u_nich">U nich</option>
+                        <option value="online">Online</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Detaily místa</label>
+                    <input type="text" name="location_details">
+                </div>
+                <div class="form-group">
+                    <label>Follow-up osoba</label>
+                    <input type="text" name="followup_person" value="Ondřej">
+                </div>
+                <div class="form-group">
+                    <label>Poznámky</label>
+                    <textarea name="notes"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addMeetingModal')">Zrušit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal pro blokování času -->
+    <div id="addBlockModal" class="modal">
+        <div class="modal-content">
+            <h2>Blokovat čas</h2>
+            <form id="addBlockForm" onsubmit="handleAddBlock(event)">
+                <div class="form-group">
+                    <label>Datum *</label>
+                    <input type="date" name="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Od *</label>
+                    <input type="time" name="time_from" required>
+                </div>
+                <div class="form-group">
+                    <label>Do *</label>
+                    <input type="time" name="time_to" required>
+                </div>
+                <div class="form-group">
+                    <label>Důvod</label>
+                    <input type="text" name="reason" placeholder="např. osobní volno">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Uložit</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addBlockModal')">Zrušit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // Modaly
+        function openAddMeetingModal() {
+            document.getElementById('addMeetingModal').classList.add('active');
+        }
+        
+        function openAddBlockModal() {
+            document.getElementById('addBlockModal').classList.add('active');
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+        
+        // Přidání schůzky
+        async function handleAddMeeting(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const data = {
+                contact_name: formData.get('contact_name'),
+                contact_phone: formData.get('contact_phone'),
+                meeting_datetime: new Date(formData.get('meeting_datetime')).toISOString(),
+                location_type: formData.get('location_type'),
+                location_details: formData.get('location_details'),
+                followup_person: formData.get('followup_person'),
+                notes: formData.get('notes')
+            };
+            
+            try {
+                const response = await fetch('/admin/meetings/api/meetings', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Schůzka přidána!');
+                    location.reload();
+                } else {
+                    alert('Chyba: ' + result.error);
+                }
+            } catch (error) {
+                alert('Chyba při ukládání: ' + error);
+            }
+        }
+        
+        // Přidání blokace
+        async function handleAddBlock(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const data = {
+                date: formData.get('date'),
+                time_from: formData.get('time_from'),
+                time_to: formData.get('time_to'),
+                reason: formData.get('reason')
+            };
+            
+            try {
+                const response = await fetch('/admin/meetings/api/availability-blocks', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Čas zablokován!');
+                    location.reload();
+                } else {
+                    alert('Chyba: ' + result.error);
+                }
+            } catch (error) {
+                alert('Chyba při ukládání: ' + error);
+            }
+        }
+        
+        // Smazání schůzky
+        async function deleteMeeting(id) {
+            if (!confirm('Opravdu smazat tuto schůzku?')) return;
+            
+            try {
+                const response = await fetch(`/admin/meetings/api/meetings/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Schůzka smazána!');
+                    location.reload();
+                } else {
+                    alert('Chyba: ' + result.error);
+                }
+            } catch (error) {
+                alert('Chyba při mazání: ' + error);
+            }
+        }
+        
+        // Smazání blokace
+        async function deleteBlock(id) {
+            if (!confirm('Opravdu odblokovat tento čas?')) return;
+            
+            try {
+                const response = await fetch(`/admin/meetings/api/availability-blocks/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Čas odblokován!');
+                    location.reload();
+                } else {
+                    alert('Chyba: ' + result.error);
+                }
+            } catch (error) {
+                alert('Chyba při mazání: ' + error);
+            }
+        }
+        
+        // Zavření modalu kliknutím mimo něj
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

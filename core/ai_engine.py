@@ -25,6 +25,15 @@ class AIEngine:
         except Exception as e:
             print(f"  ⚠️  KB import error: {e}")
             self.kb_retriever = None
+        
+        # ✅ MEETING SCHEDULER
+        try:
+            from services.meeting_scheduler import MeetingScheduler
+            self.meeting_scheduler = MeetingScheduler()
+            print("  ✅ Meeting Scheduler načten")
+        except Exception as e:
+            print(f"  ⚠️  Meeting Scheduler import error: {e}")
+            self.meeting_scheduler = None
     
     def _cleanup_czech_input(self, text):
         """
@@ -137,6 +146,8 @@ class AIEngine:
         
         # ✅ INTENCE SLOVA-KLÍČE (co chce)
         intents = {
+            'meeting': ['schůzka', 'schůzku', 'sejít', 'setkání', 'potkat', 'můžeme se sejít', 
+                       'můžem se vidět', 'setkat', 'osobně', 'prezentace', 'konzultace'],
             'price': ['kolik', 'cena', 'stojí', 'cenu', 'náklady', 'kolik to'],
             'availability': ['kdy', 'termin', 'volne', 'kdy se můžeme sejít'],
             'interest': ['zajímá', 'chci', 'mám zájem', 'bylo by', 'co kdyby'],
@@ -168,9 +179,20 @@ class AIEngine:
         intent = self._detect_intent(cleaned_message)
         print(f"  🎯 Intent: {intent}")
         
+        # ✅ MEETING DETECTION - pokud detekujeme požadavek na schůzku
+        if intent == 'meeting' and self.meeting_scheduler:
+            try:
+                meeting_response = self.meeting_scheduler.generate_ai_response(cleaned_message)
+                if meeting_response:
+                    print(f"  📅 Meeting response generated")
+                    # Přidej meeting kontext do zprávy
+                    kb_context = f"[MEETING REQUEST DETECTED]\n{meeting_response}"
+            except Exception as e:
+                print(f"  ⚠️  Meeting scheduler error: {e}")
+        
         # ✅ VYHLEDEJ KONTEXT Z KB (s vědomím INTENCE!)
-        kb_context = ""
-        if self.kb_retriever:
+        kb_context = "" if 'kb_context' not in locals() else kb_context
+        if self.kb_retriever and not kb_context:
             try:
                 kb_context = self.kb_retriever(cleaned_message)
                 if kb_context:
