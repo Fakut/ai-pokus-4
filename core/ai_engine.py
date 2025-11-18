@@ -25,6 +25,26 @@ class AIEngine:
         except Exception as e:
             print(f"  ⚠️  KB import error: {e}")
             self.kb_retriever = None
+        
+        # ✅ NOVÉ: Integrace pokročilých systémů
+        try:
+            from services.adaptive_kb import AdaptiveKnowledgeBase
+            from services.sentence_detector import SentenceDetector
+            from services.response_optimizer import ResponseOptimizer
+            from services.conversation_memory import ConversationMemory
+            
+            self.adaptive_kb = AdaptiveKnowledgeBase()
+            self.sentence_detector = SentenceDetector()
+            self.response_optimizer = ResponseOptimizer()
+            self.conversation_memory = ConversationMemory()
+            
+            print("  ✅ Pokročilé systémy načteny (Adaptive KB, Sentence Detector, Response Optimizer, Memory)")
+        except Exception as e:
+            print(f"  ⚠️  Pokročilé systémy error: {e}")
+            self.adaptive_kb = None
+            self.sentence_detector = None
+            self.response_optimizer = None
+            self.conversation_memory = None
     
     def _cleanup_czech_input(self, text):
         """
@@ -156,6 +176,7 @@ class AIEngine:
         """
         Získá odpověď od AI s automatickým KB kontextem
         VYLEPŠENO: Detekuje INTENCI, lépe rozumí českému kontextu
+        NOVÉ: Používá adaptive KB, response optimizer a sentence detection
         """
         if call_sid not in self.conversations:
             raise ValueError(f"Konverzace {call_sid} neexistuje!")
@@ -167,6 +188,33 @@ class AIEngine:
         # ✅ NOVÉ: DETEKUJ INTENCI
         intent = self._detect_intent(cleaned_message)
         print(f"  🎯 Intent: {intent}")
+        
+        # ✅ NOVÉ: Zkus najít naučenou odpověď z Adaptive KB
+        learned_response = None
+        if self.adaptive_kb:
+            learned_response = self.adaptive_kb.get_best_response(cleaned_message)
+        
+        # ✅ NOVÉ: Zkontroluj cache pro rychlejší odpověď
+        cached_response = None
+        if self.response_optimizer and self.response_optimizer.should_use_cache(cleaned_message, intent):
+            cached_response = self.response_optimizer.get_cached_response(
+                cleaned_message, 
+                {'intent': intent}
+            )
+        
+        # Pokud máme cached nebo learned response, použij ho
+        if cached_response:
+            return cached_response
+        
+        if learned_response:
+            print(f"  📚 Using learned response")
+            # Cache learned response pro další použití
+            if self.response_optimizer:
+                self.response_optimizer.cache_response(
+                    cleaned_message, learned_response, 
+                    {'intent': intent}, generation_time=0.1
+                )
+            return learned_response
         
         # ✅ VYHLEDEJ KONTEXT Z KB (s vědomím INTENCE!)
         kb_context = ""
@@ -192,6 +240,9 @@ class AIEngine:
         
         # ✅ ZAVOLEJ OpenAI - SUPER RYCHLÉ PARAMETRY
         try:
+            import time
+            start_time = time.time()
+            
             response = openai.chat.completions.create(
                 model=self.model,
                 messages=self.conversations[call_sid],
@@ -201,6 +252,8 @@ class AIEngine:
                 frequency_penalty=0.6,  # ✅ SILNĚJŠÍ rozmanitost
                 top_p=0.85  # ✅ JEŠTĚ specifičtější výběr
             )
+            
+            generation_time = time.time() - start_time
             
             ai_reply = response.choices[0].message.content.strip()
             
@@ -212,6 +265,13 @@ class AIEngine:
                 'role': 'assistant',
                 'content': ai_reply
             })
+            
+            # ✅ NOVÉ: Cache odpověď pro budoucí použití
+            if self.response_optimizer:
+                self.response_optimizer.cache_response(
+                    cleaned_message, ai_reply,
+                    {'intent': intent}, generation_time
+                )
             
             return ai_reply
             
@@ -259,12 +319,38 @@ class AIEngine:
         
         return text
     
-    def end_conversation(self, call_sid):
-        """Ukončí konverzaci a vrátí historii"""
+    def end_conversation(self, call_sid, outcome_score: int = 0):
+        """
+        Ukončí konverzaci a vrátí historii
+        NOVÉ: Učí se z konverzace pomocí adaptive KB a conversation memory
+        
+        Args:
+            call_sid: ID hovoru
+            outcome_score: Skóre výsledku (0-100) pro learning
+        """
         if call_sid not in self.conversations:
             return []
         
         history = self.conversations[call_sid].copy()
+        
+        # ✅ NOVÉ: Ulož konverzaci pro learning
+        if self.adaptive_kb and outcome_score > 0:
+            try:
+                self.adaptive_kb.learn_from_conversation(call_sid, history, outcome_score)
+            except Exception as e:
+                print(f"  ⚠️  Adaptive KB learning error: {e}")
+        
+        if self.conversation_memory and outcome_score > 0:
+            try:
+                conversation_data = {
+                    'history': history,
+                    'outcome_score': outcome_score,
+                    'start_time': None,  # TODO: track actual times
+                    'end_time': None
+                }
+                self.conversation_memory.store_conversation(call_sid, conversation_data)
+            except Exception as e:
+                print(f"  ⚠️  Conversation memory error: {e}")
         
         # ⚠️ NESMAŽ JEŠTĚ! Learning system potřebuje přístup
         # del self.conversations[call_sid]
@@ -275,3 +361,64 @@ class AIEngine:
     def get_conversation_history(self, call_sid):
         """Vrátí historii konverzace"""
         return self.conversations.get(call_sid, [])
+    
+    def process_speech_fragment(self, call_sid: str, text_fragment: str) -> dict:
+        """
+        NOVÉ: Zpracuje fragment řeči se sentence detection
+        Inteligentně čeká na kompletní věty
+        
+        Args:
+            call_sid: ID hovoru
+            text_fragment: Fragment textu ze STT
+            
+        Returns:
+            Dict s akcí: {'action': 'wait'|'process', 'complete_text': str}
+        """
+        if not self.sentence_detector:
+            # Fallback - zpracuj okamžitě
+            return {'action': 'process', 'complete_text': text_fragment, 'complete': True}
+        
+        # Přidej fragment do detektoru
+        result = self.sentence_detector.add_fragment(text_fragment)
+        
+        if result['complete']:
+            print(f"  ✅ Sentence complete: '{result['text'][:50]}...'")
+            return {
+                'action': 'process',
+                'complete_text': result['text'],
+                'complete': True,
+                'detection_type': result.get('detected', 'unknown')
+            }
+        else:
+            print(f"  ⏳ Waiting for complete sentence (buffer: '{result['buffer'][:50]}...')")
+            return {
+                'action': 'wait',
+                'complete_text': '',
+                'complete': False,
+                'buffer': result.get('buffer', '')
+            }
+    
+    def get_system_stats(self) -> dict:
+        """
+        NOVÉ: Vrátí statistiky všech pokročilých systémů
+        
+        Returns:
+            Dict se statistikami
+        """
+        stats = {
+            'conversations_active': len(self.conversations),
+            'adaptive_kb': None,
+            'response_optimizer': None,
+            'conversation_memory': None
+        }
+        
+        if self.adaptive_kb:
+            stats['adaptive_kb'] = self.adaptive_kb.get_stats()
+        
+        if self.response_optimizer:
+            stats['response_optimizer'] = self.response_optimizer.get_cache_stats()
+        
+        if self.conversation_memory:
+            stats['conversation_memory'] = self.conversation_memory.get_stats()
+        
+        return stats
