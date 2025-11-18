@@ -1,0 +1,115 @@
+🎤 OPRAVY PRO COLD CALLING
+════════════════════════════════════════════════════════════════
+
+PROBLÉM 1: Když nic neřekneš, Whisper halucinuje v angličtině ❌
+ŘEŠENÍ: Detekce VAD - pokud je málo řeči (<20%), ignoruj Whisper ✅
+
+PROBLÉM 2: Prompt byl pro barber shop recepci ❌
+ŘEŠENÍ: Změněn na COLD CALLING - prodej webů ✅
+
+════════════════════════════════════════════════════════════════
+
+ZMĚNY V SOUBORECH:
+──────────────────
+
+1️⃣ config/prompts.py - RECEPTIONIST PROMPT
+   ❌ BYLO: Telefonní recepční (barber shop)
+   ✅ TEĎKA: Cold calling agent - tvorba webů
+   
+   Nový prompt obsahuje:
+   - POZDRAV: "Volám z MoravskéWeby"
+   - KVALIFIKACE: "Jakou máte webové stránky?"
+   - VALUE: "Zrychlíme web a zvýšíme viditelnost"
+   - CLOSE: "Budete to mít od kolegy"
+   - TONE: Přátelský, profesionální, sebejistý
+
+2️⃣ core/stt_engine.py - HALUCINACE PREVENCE
+   ✅ NOVÉ: Kontrola VAD (Voice Activity Detection)
+   
+   if speech_percentage < 20:
+       print("Málo řeči - ignoruji Whisper halucinaci")
+       return None
+   
+   Vědecké vysvětlení:
+   - Když je málo řeči, Whisper halucinuje
+   - Náš VAD detekuje: "............................... OK"
+   - Pokud málo teček = málo řeči = vrátí None
+   - None = Server ptá se "Slyšíte mě?"
+
+3️⃣ api/server.py - LEPŠÍ RETRY LOGIKA
+   ✅ NOVÉ: Rozsáhlejší otázky při retry
+   
+   1. retry (0): "Slyšíte mě?"
+   2. retry (1): "Zopakujte prosím, neslyším dobře"
+   3. retry (2+): "Omlouvám se, neslyším vás. Hezký den." + HANGUP
+
+════════════════════════════════════════════════════════════════
+
+JAK TO TEĎKA FUNGUJE:
+─────────────────────
+
+Scénář 1: Normální hlas
+───────────────────────
+[Agent]: "Dobry den, volam z MoravskéWeby. Mate minutku?"
+[Volající]: "Ano, prosím"
+[VAD]: ...................... OK (80% řeči)
+[Whisper]: "Ano prosím" ✅ (Přijato)
+[Agent]: "Jakou máte webové stránky?"
+
+Scénář 2: Ticho
+───────────────
+[Agent]: "Dobry den, volam z MoravskéWeby. Mate minutku?"
+[Volající]: (ticho)
+[VAD]: --------------------- OK (5% řeči)
+[Whisper]: (halucinace: "hello world" apod)
+[KONTROLA]: 5% < 20% → return None
+[Agent]: "Slyšíte mě?" (1. retry)
+
+[Volající]: (stále ticho)
+[KONTROLA]: 5% < 20% → return None
+[Agent]: "Zopakujte prosím" (2. retry)
+
+[Volající]: (stále ticho)
+[KONTROLA]: 5% < 20% → return None
+[Agent]: "Omlouvám se, neslyším vás. Hezký den." + HANGUP
+
+════════════════════════════════════════════════════════════════
+
+TESTOVÁNÍ:
+──────────
+
+1. Zavolej na číslo
+2. Agent: "Dobry den, volam z MoravskéWeby. Mate minutku?"
+3. Odpověz jasně (test normální situace)
+   → Měl by pochopit
+
+4. Zavolej znovu
+5. Agent: "Dobry den, volam z MoravskéWeby. Mate minutku?"
+6. Necháš ticho (test halucinace)
+   → Agent: "Slyšíte mě?" (ne "haló haló")
+   → Po 2x retry: hangup
+
+════════════════════════════════════════════════════════════════
+
+KONFIGURACE (pokud chceš vyladit):
+
+core/stt_engine.py, řádek ~238:
+if speech_percentage < 20:  # ← Změň toto číslo
+    return None
+
+Doporučené hodnoty:
+- < 15 = velmi citlivý (méně false positives)
+- < 20 = normální (aktuální)
+- < 30 = více tolerantní (více halucinací)
+
+════════════════════════════════════════════════════════════════
+
+VÝSLEDEK:
+─────────
+
+✅ Halucinace Whisperu eliminovány
+✅ Prompt je správný pro cold calling
+✅ Lepší UX s "Slyšíte mě?" místo "haló haló"
+✅ Systém je robustnější na hluk
+
+Hotovo! 🚀

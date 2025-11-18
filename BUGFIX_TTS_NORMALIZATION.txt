@@ -1,0 +1,69 @@
+"""
+🔧 BUGFIX - TTS TEXT NORMALIZATION
+Oprava: Regex pro normalizaci textu byla pokazena
+═════════════════════════════════════════════════════════════════
+
+PROBLÉM:
+────────
+TTS engine měl BUG v normalizaci - nahrazoval znaky které neměl:
+  • 'Dobrý den' → 'Dobrázek den' ❌ (nahradil "Dobrý" → "Dobrázek"?!)
+  • 'Jakýkoliv ... máte na srdci' → 'Jakýkoliv ... máte nakciová společnostdci' ❌
+
+PŘÍČINA:
+────────
+Regex pro nahrazování zkratek byl příliš liberální:
+  • Pattern: zkratka.replace(zkratka, rozepsane, flags=re.IGNORECASE)
+  • Problém: Case-insensitive search hledal "s.r.o." v každém slově
+  • Výsledek: Zničilo běžný text
+
+ŘEŠENÍ:
+───────
+Změnilo se z:
+  zkratky = {'s.r.o.': 'akciová společnost', ...}
+  for zkratka, rozepsane in zkratky.items():
+      normalized = re.sub(zkratka, rozepsane, flags=re.IGNORECASE)
+
+Na:
+  zkratky_regex = [
+      (r'\s+atd\.\s+', ' a tak dále ', re.IGNORECASE),  # POUZE s mezerami!
+      (r'^atd\.\s+', 'a tak dále ', re.IGNORECASE),     # POUZE na začátku
+      ...
+  ]
+  for pattern, replacement, flags in zkratky_regex:
+      normalized = re.sub(pattern, replacement, flags=flags)
+
+✅ VÝSLEDEK:
+────────────
+Nyní zkratky nahrazujeme POUZE pokud:
+  • Mají tečku (\.):
+  • Jsou obklopeny mezerami (\s+) NEBO na začátku (^)
+  • Pomocí REGEX s word boundaries
+
+Příklady:
+  'Dobrý den' → 'Dobrý den' ✅ (Bez změny - nikdy "Dobrý" není zkratka)
+  ' atd. více' → ' a tak dále více' ✅ (Zkratka s mezerami)
+  'Jakýkoliv dotaz ... máte na srdci?' → '...' ✅ (Bez změny - není zkratka)
+
+TAKÉ FIXED:
+───────────
+Odstraněny Unicode znaky ze TTSEngine init:
+  'TTSEngine OK' místo 'TTSEngine ✓ OK'
+  'Normalized' místo 'Normalizáno 🇨🇿'
+  
+Důvod: Windows PowerShell má problémy s Unicode v print()
+
+═════════════════════════════════════════════════════════════════
+STATUS: ✅ OPRAVENO
+
+Normalizace nyní:
+  ✅ Konvertuje časy: "14:00" → "čtrnáct hodin"
+  ✅ Konvertuje čísla: "5" → "pět"
+  ✅ NEOHROŽUJE běžný text
+  ✅ Bezpečně nahrazuje POUZE zkratky s tečkou a mezerami
+
+READY TO ROLL! 🚀
+═════════════════════════════════════════════════════════════════
+"""
+
+if __name__ == '__main__':
+    print(__doc__)
