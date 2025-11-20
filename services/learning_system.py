@@ -265,6 +265,7 @@ class LearningSystem:
     def get_optimized_prompt(self, product, contact_name):
         """
         Vrací optimalizovaný prompt na základě learnings
+        VYLEPŠENO: Integruje adaptive KB a conversation memory insights
         """
         from database.knowledge_base import get_sales_prompt_with_kb
         
@@ -288,6 +289,25 @@ class LearningSystem:
 POUŽIJ TYTO INSIGHTS v konverzaci!
 """
                 base_prompt += insights
+        
+        # ✅ NOVÉ: Přidej insights z conversation memory
+        try:
+            from services.conversation_memory import ConversationMemory
+            memory = ConversationMemory()
+            best_practices = memory.get_best_practices()
+            
+            if best_practices.get('best_openings'):
+                base_prompt += f"""
+
+--- BEST PRACTICES Z ÚSPĚŠNÝCH KONVERZACÍ ---
+✅ Nejlepší openings:
+{chr(10).join(f"  - {opening[:80]}" for opening in best_practices['best_openings'][:2])}
+
+✅ Úspěšné patterns:
+{chr(10).join(f"  - {p['pattern']}: {p['success_rate']} (score: {p['avg_score']})" for p in best_practices['successful_patterns'][:3])}
+"""
+        except Exception as e:
+            pass  # Pokud conversation memory není dostupná
         
         return base_prompt
     

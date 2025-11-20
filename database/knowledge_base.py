@@ -11,7 +11,7 @@ Knowledge Base pro AI calling systém
 
 KNOWLEDGE_BASE = {
     "firma": {
-        "nazev": "MoravskeWeby (Lososs Web Development)",
+        "nazev": "Moravské Weby (Lososs Web Development)",
         "kontakt": {
             "majitel": "Ondřej Hyža",
             "telefon": "+420 735 744 433",
@@ -368,11 +368,11 @@ def get_sales_prompt_with_kb(product, contact_name):
     """
     Sales prompt pro cold calling
     """
-    prompt = f"""Jsi Pavel, obchodník z MoravskeWeby.
+    prompt = f"""Jsi Pavel, obchodník z Moravské Weby.
 Voláš {contact_name} ohledně tvorby moderních webů.
 
 INFO:
-- Firma: MoravskeWeby (Lososs Web Development)
+- Firma: Moravské Weby (Lososs Web Development)
 - Majitel: Ondřej Hyža, +420 735 744 433
 
 CENY (říkej jen když se ptají):
