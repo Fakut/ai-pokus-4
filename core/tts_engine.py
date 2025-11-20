@@ -80,19 +80,43 @@ class TTSEngine:
             return f"{hours_words} hodin {minutes_words} minut"
     
     def _number_to_words(self, num):
-        """Konvertuje číslo na slova (základní)"""
-        ones = ["nula", "jedna", "dva", "tři", "čtyři", "pět", "šest", "sedm", "osm", "devět"]
-        teens = ["deset", "jedenáct", "dvanáct", "třináct", "čtrnáct", "patnáct", "šestnáct", "sedmnáct", "osmnáct", "devatenáct"]
-        tens = ["", "", "dvacet", "třicet", "čtyřicet", "padesát", "šedesát", "sedmdesát", "osmdesát", "devadesát"]
-        
-        if num < 10:
-            return ones[num]
-        elif num < 20:
-            return teens[num - 10]
-        elif num < 100:
-            return tens[num // 10] + ("" if num % 10 == 0 else " " + ones[num % 10])
+    """Konvertuje číslo na slova (rozšířené pro tisíce)"""
+    ones = ["nula", "jedna", "dva", "tři", "čtyři", "pět", "šest", "sedm", "osm", "devět"]
+    teens = ["deset", "jedenáct", "dvanáct", "třináct", "čtrnáct", "patnáct", "šestnáct", "sedmnáct", "osmnáct", "devatenáct"]
+    tens = ["", "", "dvacet", "třicet", "čtyřicet", "padesát", "šedesát", "sedmdesát", "osmdesát", "devadesát"]
+    hundreds = ["", "sto", "dvěstě", "třista", "čtyřista", "pětset", "šestset", "sedmset", "osmset", "devětset"]
+    
+    if num < 10:
+        return ones[num]
+    elif num < 20:
+        return teens[num - 10]
+    elif num < 100:
+        return tens[num // 10] + ("" if num % 10 == 0 else " " + ones[num % 10])
+    elif num < 1000:
+        hundred_part = hundreds[num // 100]
+        remainder = num % 100
+        if remainder == 0:
+            return hundred_part
         else:
-            return str(num)  # Fallback pro větší čísla
+            return hundred_part + " " + self._number_to_words(remainder)
+    elif num < 1000000:
+        thousands = num // 1000
+        remainder = num % 1000
+        
+        # Převod tisíců
+        if thousands == 1:
+            thousand_part = "tisíc"
+        elif thousands < 5:
+            thousand_part = self._number_to_words(thousands) + " tisíce"  
+        else:
+            thousand_part = self._number_to_words(thousands) + " tisíc"
+            
+        if remainder == 0:
+            return thousand_part
+        else:
+            return thousand_part + " " + self._number_to_words(remainder)
+    else:
+        return str(num)  # Fallback pro velmi velká čísla
     
     def generate(self, text, use_cache=True):
         """Vygeneruje audio z textu"""
